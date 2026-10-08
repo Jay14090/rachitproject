@@ -13,6 +13,7 @@ export const NAV = [
   { to: '/models', label: 'ML Models', roles: ['admin', 'doctor', 'analyst'] },
   { to: '/users', label: 'Users', roles: ['admin'] },
   { to: '/audit', label: 'Audit Log', roles: ['admin'] },
+  { to: '/account', label: 'My account', roles: ['admin', 'doctor', 'reception', 'analyst'] },
 ]
 
 export function AuthProvider({ children }) {

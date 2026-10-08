@@ -1,5 +1,12 @@
 from datetime import date, timedelta
 
+def next_weekday(min_days_ahead: int) -> date:
+    d = date.today() + timedelta(days=min_days_ahead)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
 DIABETES = dict(pregnancies=2, glucose=148, blood_pressure=72, skin_thickness=35, insulin=0, bmi=33.6,
                 diabetes_pedigree=0.627, age=50)
 
@@ -85,7 +92,7 @@ def test_admin_manages_departments_and_doctors(client, admin):
 def test_appointment_lifecycle_and_double_booking(client, reception):
     p = new_patient(client, reception)
     doc_id = client.get("/api/doctors", headers=reception).json()[0]["doctor_id"]
-    day = (date.today() + timedelta(days=10)).isoformat()
+    day = next_weekday(10).isoformat()
     body = {"patient_id": p["patient_id"], "doctor_id": doc_id, "date": day, "time": "10:30:00", "purpose": "Checkup"}
     a = client.post("/api/appointments", headers=reception, json=body)
     assert a.status_code == 201, a.text

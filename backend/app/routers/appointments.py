@@ -8,6 +8,7 @@ from ..audit import log_action
 from ..database import get_db
 from ..deps import ADMIN, DOCTOR, RECEPTION, require_roles
 from ..models import Appointment, Doctor, Patient, User
+from ..scheduling import SLOT_MINUTES, has_schedule, slot_is_valid
 from ..schemas import AppointmentIn, AppointmentOut, AppointmentUpdate
 
 router = APIRouter(prefix="/api/appointments", tags=["appointments"])
@@ -25,6 +26,13 @@ def _check_slot_free(db: Session, doctor_id: int, day: date, at, exclude_id: int
 def _check_not_past(day: date, at) -> None:
     if datetime.combine(day, at) < datetime.now():
         raise HTTPException(422, "Appointment cannot be scheduled in the past")
+
+
+def _check_schedule(db: Session, doctor_id: int, day: date, at) -> None:
+    """If the doctor has a published weekly schedule, the slot must fall on it (and on the slot grid)."""
+    if has_schedule(db, doctor_id) and not slot_is_valid(db, doctor_id, day, at):
+        raise HTTPException(422, f"Doctor is not available at that time. Choose a free {SLOT_MINUTES}-minute slot "
+                                 "inside the doctor's working hours (see /api/doctors/{{id}}/slots).")
 
 
 def _check_doctor_active(db: Session, doctor_id: int) -> None:
@@ -58,6 +66,7 @@ def create_appointment(body: AppointmentIn, db: Session = Depends(get_db), actor
         raise HTTPException(422, "patient_id does not exist")
     _check_doctor_active(db, body.doctor_id)
     _check_not_past(body.date, body.time)
+    _check_schedule(db, body.doctor_id, body.date, body.time)
     _check_slot_free(db, body.doctor_id, body.date, body.time)
     appt = Appointment(**body.model_dump())
     db.add(appt)
@@ -92,6 +101,7 @@ def update_appointment(appointment_id: int, body: AppointmentUpdate, db: Session
             raise HTTPException(422, "Only a scheduled appointment can be rescheduled")
         _check_doctor_active(db, new_doctor)
         _check_not_past(new_date, new_time)
+        _check_schedule(db, new_doctor, new_date, new_time)
         _check_slot_free(db, new_doctor, new_date, new_time, exclude_id=appt.appointment_id)
 
     for k, v in changes.items():

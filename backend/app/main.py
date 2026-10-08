@@ -27,7 +27,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Smart Hospital Management & Disease Risk Prediction", version="0.4.0", lifespan=lifespan)
+app = FastAPI(title="Smart Hospital Management & Disease Risk Prediction", version="0.7.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 

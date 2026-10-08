@@ -4,7 +4,8 @@ set -e
 cd "$(dirname "$0")"
 [ -d .venv ] || python3 -m venv .venv
 .venv/bin/pip install -q -r backend/requirements.txt
-[ -f ml/artifacts/diabetes_model.joblib ] || .venv/bin/python ml/train_diabetes.py
+[ -f ml/artifacts/diabetes_model.joblib ] || (cd ml && ../.venv/bin/python train_diabetes.py)
+[ -f ml/artifacts/heart_model.joblib ] || (cd ml && ../.venv/bin/python train_heart.py)
 [ -d frontend/node_modules ] || (cd frontend && npm install --no-audit --no-fund)
 trap 'kill 0' EXIT
 (cd backend && ../.venv/bin/uvicorn app.main:app --port 8000) &

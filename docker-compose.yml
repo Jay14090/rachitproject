@@ -1,6 +1,8 @@
-# Optional: a MySQL server for the backend (the project defaults to SQLite if you skip this).
-#   docker compose up -d db
+# Full stack:   docker compose up --build        -> UI on http://localhost:8080, API docs on http://localhost:8000/docs
+# DB only:      docker compose up -d db          (then run the backend locally with DATABASE_URL below)
 #   export DATABASE_URL="mysql+pymysql://hospital:hospital@127.0.0.1:3306/smart_hospital"
+#
+# Set SECRET_KEY in your shell (or a .env file next to this file) before using this anywhere real.
 services:
   db:
     image: mysql:8.4
@@ -11,5 +13,23 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports: ["3306:3306"]
     volumes: [mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      retries: 20
+
+  api:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    environment:
+      DATABASE_URL: mysql+pymysql://hospital:hospital@db:3306/smart_hospital
+      SECRET_KEY: ${SECRET_KEY:-change-me-before-real-use-0123456789abcdef}
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["8000:8000"]
+
+  web:
+    build: { context: ., dockerfile: frontend/Dockerfile }
+    depends_on: [api]
+    ports: ["8080:80"]
+
 volumes:
   mysql_data:

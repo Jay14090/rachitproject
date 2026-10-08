@@ -1,4 +1,4 @@
-"""Inference wrapper for the trained diabetes model (training lives in /ml)."""
+"""Inference wrapper for the trained risk models (training lives in /ml)."""
 import json
 import logging
 from datetime import datetime
@@ -6,6 +6,7 @@ from functools import lru_cache
 
 import joblib
 import pandas as pd
+import sklearn
 
 from .config import ML_ARTIFACT_DIR
 
@@ -13,11 +14,20 @@ log = logging.getLogger(__name__)
 
 RISK_LEVELS = [(0.33, "low"), (0.66, "moderate"), (1.01, "high")]
 
+# API/disease_type name -> artifact file prefix produced by ml/train_*.py
+DISEASES = {"diabetes": "diabetes", "heart_disease": "heart"}
 
-class DiabetesModel:
-    def __init__(self) -> None:
-        self.pipeline = joblib.load(ML_ARTIFACT_DIR / "diabetes_model.joblib")
-        self.meta = json.loads((ML_ARTIFACT_DIR / "diabetes_meta.json").read_text())
+
+class RiskModel:
+    def __init__(self, disease: str) -> None:
+        prefix = DISEASES[disease]
+        self.disease = disease
+        self.meta = json.loads((ML_ARTIFACT_DIR / f"{prefix}_meta.json").read_text())
+        trained_with = self.meta.get("sklearn_version")
+        if trained_with and trained_with != sklearn.__version__:
+            log.warning("%s model was trained with scikit-learn %s but %s is installed; if loading or predictions "
+                        "fail, retrain with `python ml/train_%s.py`.", disease, trained_with, sklearn.__version__, prefix)
+        self.pipeline = joblib.load(ML_ARTIFACT_DIR / f"{prefix}_model.joblib")
         self.features: list[str] = self.meta["features"]
         self.medians: dict[str, float] = self.meta["feature_medians"]
 
@@ -53,26 +63,28 @@ class DiabetesModel:
         return sorted(out, key=lambda d: abs(d["impact"]), reverse=True)
 
 
-@lru_cache(maxsize=1)
-def get_diabetes_model() -> DiabetesModel:
-    return DiabetesModel()
+@lru_cache(maxsize=None)
+def get_model(disease: str) -> RiskModel:
+    return RiskModel(disease)
 
 
 def register_model_versions(db) -> None:
-    """Make sure the loaded model is recorded in model_versions (idempotent)."""
+    """Make sure every loadable model is recorded in model_versions (idempotent)."""
     from .models import ModelVersion
-    try:
-        model = get_diabetes_model()
-    except FileNotFoundError:
-        log.warning("ML artifacts missing — run `python ml/train_diabetes.py`. Prediction endpoints disabled.")
-        return
-    m = model.meta
-    if db.query(ModelVersion).filter_by(version=m["version"]).first():
-        return
-    db.query(ModelVersion).filter_by(disease_type="diabetes").update({"active_flag": False})
-    db.add(ModelVersion(disease_type="diabetes", algorithm=m["algorithm"], version=m["version"],
-                        metrics={**m["metrics"], "cv_roc_auc_mean": m["cv_roc_auc_mean"],
-                                 "comparison": m["comparison"]},
-                        trained_at=datetime.fromisoformat(m["trained_at"]).replace(tzinfo=None),
-                        active_flag=True))
-    db.commit()
+    for disease in DISEASES:
+        try:
+            model = get_model(disease)
+        except FileNotFoundError:
+            log.warning("ML artifacts for %s missing — run the matching ml/train_*.py. "
+                        "Its prediction endpoint is disabled.", disease)
+            continue
+        m = model.meta
+        if db.query(ModelVersion).filter_by(version=m["version"]).first():
+            continue
+        db.query(ModelVersion).filter_by(disease_type=disease).update({"active_flag": False})
+        db.add(ModelVersion(disease_type=disease, algorithm=m["algorithm"], version=m["version"],
+                            metrics={**m["metrics"], "cv_roc_auc_mean": m["cv_roc_auc_mean"],
+                                     "comparison": m["comparison"]},
+                            trained_at=datetime.fromisoformat(m["trained_at"]).replace(tzinfo=None),
+                            active_flag=True))
+        db.commit()

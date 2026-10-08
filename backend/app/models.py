@@ -142,3 +142,22 @@ class AuditLog(Base):
     # Never put PHI (names, contact, clinical values) in here — IDs and changed field names only.
     log_metadata: Mapped[dict | None] = mapped_column("metadata", JSON)
     user: Mapped[User | None] = relationship(lazy="joined")
+
+
+class DoctorAvailability(Base):
+    """Weekly working window for a doctor. If a doctor has no rows, bookings are not schedule-restricted."""
+    __tablename__ = "doctor_availability"
+    availability_id: Mapped[int] = mapped_column(primary_key=True)
+    doctor_id: Mapped[int] = mapped_column(ForeignKey("doctors.doctor_id"), index=True)
+    weekday: Mapped[int] = mapped_column(Integer)  # 0 = Monday ... 6 = Sunday
+    start_time: Mapped[time] = mapped_column(Time)
+    end_time: Mapped[time] = mapped_column(Time)
+
+
+class LoginThrottle(Base):
+    """Failed-login counter keyed by email (whether or not the account exists, so lockout can't be used
+    to discover which emails are registered)."""
+    __tablename__ = "login_throttle"
+    email: Mapped[str] = mapped_column(String(190), primary_key=True)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime)

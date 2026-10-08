@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 
 from sqlalchemy.orm import Session
 
-from .models import Appointment, Department, Doctor, Patient, User
+from .models import Appointment, Department, Doctor, DoctorAvailability, Patient, User
 from .security import hash_password
 
 DEMO_PASSWORD = "Password123!"
@@ -25,6 +25,11 @@ def seed(db: Session) -> None:
                Doctor(name="Dr. Neha Kapoor", specialization="Endocrinologist", department_id=depts[2].department_id)]
     db.add_all(doctors)
     db.flush()
+    # Mon-Fri 09:00-13:00 and 14:00-17:00 for every demo doctor.
+    for d in doctors:
+        for wd in range(5):
+            db.add_all([DoctorAvailability(doctor_id=d.doctor_id, weekday=wd, start_time=time(9), end_time=time(13)),
+                        DoctorAvailability(doctor_id=d.doctor_id, weekday=wd, start_time=time(14), end_time=time(17))])
     pw = hash_password(DEMO_PASSWORD)
     db.add_all([
         User(name="System Admin", email="admin@hospital.example.com", password_hash=pw, role="admin"),
@@ -42,7 +47,14 @@ def seed(db: Session) -> None:
     db.add_all(patients)
     db.flush()
     start = datetime.now().date() + timedelta(days=1)
+    while start.weekday() >= 5:  # first weekday from tomorrow, to match the doctors' schedules
+        start += timedelta(days=1)
     for i, p in enumerate(patients[:5]):
+        day = start
+        for _ in range(i % 3):
+            day += timedelta(days=1)
+            while day.weekday() >= 5:
+                day += timedelta(days=1)
         db.add(Appointment(patient_id=p.patient_id, doctor_id=doctors[i % 3].doctor_id,
-                           date=start + timedelta(days=i % 3), time=time(9 + i, 0), purpose="Routine check-up"))
+                           date=day, time=time(9 + i % 4, 0), purpose="Routine check-up"))
     db.commit()

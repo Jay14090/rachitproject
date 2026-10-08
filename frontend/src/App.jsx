@@ -9,6 +9,7 @@ import Staff from './pages/Staff'
 import Models from './pages/Models'
 import Users from './pages/Users'
 import AuditLog from './pages/AuditLog'
+import Account from './pages/Account'
 
 function Guard({ roles, children }) {
   const { user } = useAuth()
@@ -42,6 +43,7 @@ function Shell() {
           <Route path="/models" element={<Guard roles={['admin', 'doctor', 'analyst']}><Models /></Guard>} />
           <Route path="/users" element={<Guard roles={['admin']}><Users /></Guard>} />
           <Route path="/audit" element={<Guard roles={['admin']}><AuditLog /></Guard>} />
+          <Route path="/account" element={<Account />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>

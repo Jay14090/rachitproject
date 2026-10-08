@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import PredictionPanel from '../components/PredictionPanel'
 import { useFetch, useForm } from '../hooks'
-
-const LEVEL_COLOR = { low: '#2e9e5b', moderate: '#e0a100', high: '#d64545' }
 
 export default function PatientDetail() {
   const { id } = useParams()
@@ -24,7 +22,7 @@ export default function PatientDetail() {
       </section>
       {clinical ? (
         <>
-          <Prediction patientId={p.patient_id} age={p.age} />
+          <PredictionPanel patientId={p.patient_id} age={p.age} />
           <Records patientId={p.patient_id} />
         </>
       ) : <p className="muted">Clinical records and predictions are visible to doctors and administrators only.</p>}
@@ -61,98 +59,6 @@ function PatientProfile({ p, canEdit, onSaved }) {
       {error && <p className="error wide">{error}</p>}
       <div className="row"><button>Save</button><button type="button" className="link" onClick={() => setEditing(false)}>Cancel</button></div>
     </form>
-  )
-}
-
-const FIELDS = [
-  ['pregnancies', 'Pregnancies', '1', 0, 20],
-  ['glucose', 'Glucose (mg/dL)', '1', 40, 400],
-  ['blood_pressure', 'Diastolic BP (mm Hg)', '1', 30, 200],
-  ['skin_thickness', 'Skin thickness (mm)', '1', 0, 100],
-  ['insulin', 'Insulin (mu U/ml, 0 = unknown)', '1', 0, 900],
-  ['bmi', 'BMI', '0.1', 10, 70],
-  ['diabetes_pedigree', 'Diabetes pedigree function', '0.001', 0, 3],
-  ['age', 'Age', '1', 1, 120],
-]
-
-function Prediction({ patientId, age }) {
-  const { data: history, reload } = useFetch(() => api.get(`/predictions/${patientId}`), [patientId])
-  const { values, bind } = useForm({
-    pregnancies: 0, glucose: '', blood_pressure: '', skin_thickness: 20, insulin: 0, bmi: '', diabetes_pedigree: 0.5, age,
-  })
-  const [error, setError] = useState('')
-  const [result, setResult] = useState(null)
-  const [busy, setBusy] = useState(false)
-
-  const submit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setBusy(true)
-    try {
-      const body = { patient_id: patientId }
-      FIELDS.forEach(([k]) => { body[k] = Number(values[k]) })
-      setResult(await api.post('/predict/diabetes', body))
-      reload()
-    } catch (err) { setError(err.message) } finally { setBusy(false) }
-  }
-
-  return (
-    <section className="card">
-      <h3>Diabetes risk prediction</h3>
-      <form className="formgrid" onSubmit={submit}>
-        {FIELDS.map(([k, label, step, min, max]) => (
-          <label key={k}>{label}<input type="number" step={step} min={min} max={max} required {...bind(k)} /></label>
-        ))}
-        <button disabled={busy}>{busy ? 'Calculating…' : 'Estimate risk'}</button>
-      </form>
-      {error && <p className="error">{error}</p>}
-      {result && <PredictionResult r={result} />}
-      <h4>History</h4>
-      {history && history.length === 0 && <p className="muted">No predictions yet.</p>}
-      {history && history.length > 0 && (
-        <table>
-          <thead><tr><th>Date</th><th>Risk</th><th>Level</th><th>Model</th></tr></thead>
-          <tbody>
-            {history.map((h) => (
-              <tr key={h.prediction_id} onClick={() => setResult(h)} className="clickable">
-                <td>{h.created_at.replace('T', ' ').slice(0, 16)}</td>
-                <td>{(h.risk_score * 100).toFixed(1)}%</td>
-                <td><span className="pill" style={{ background: LEVEL_COLOR[h.risk_level] }}>{h.risk_level}</span></td>
-                <td className="muted">{h.model_version}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </section>
-  )
-}
-
-function PredictionResult({ r }) {
-  const chart = r.explanation.map((e) => ({ name: `${e.feature} = ${e.value}`, impact: Math.round(e.impact * 1000) / 10 }))
-  return (
-    <div className="result" style={{ borderColor: LEVEL_COLOR[r.risk_level] }}>
-      <div className="row between">
-        <div>
-          <div className="big" style={{ color: LEVEL_COLOR[r.risk_level] }}>{(r.risk_score * 100).toFixed(1)}% — {r.risk_level} risk</div>
-          <div className="muted">Model {r.model_version} · {r.created_at.replace('T', ' ').slice(0, 16)}</div>
-        </div>
-      </div>
-      <h4>What drove this estimate</h4>
-      <p className="muted">Change in predicted risk (percentage points) vs. an average value for each factor. Positive = pushes risk up.</p>
-      <ResponsiveContainer width="100%" height={Math.max(220, chart.length * 30)}>
-        <BarChart data={chart} layout="vertical" margin={{ left: 120 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" unit=" pp" />
-          <YAxis type="category" dataKey="name" width={180} tick={{ fontSize: 12 }} />
-          <Tooltip />
-          <Bar dataKey="impact" name="Impact (pp)">
-            {chart.map((c, i) => <Cell key={i} fill={c.impact >= 0 ? '#d64545' : '#2e9e5b'} />)}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <p className="disclaimer">⚠ {r.disclaimer}</p>
-    </div>
   )
 }
 

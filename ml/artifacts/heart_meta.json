@@ -1,0 +1,122 @@
+{
+  "disease": "heart",
+  "version": "heart-random-forest-v1",
+  "algorithm": "Random Forest",
+  "sklearn_version": "1.9.1",
+  "trained_at": "2026-10-08T21:01:09+00:00",
+  "dataset": "Cleveland Heart Disease (UCI, public, de-identified), n=303",
+  "features": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "feature_medians": {
+    "age": 55.0,
+    "sex": 1.0,
+    "cp": 1.0,
+    "trestbps": 130.0,
+    "chol": 244.0,
+    "fbs": 0.0,
+    "restecg": 1.0,
+    "thalach": 152.0,
+    "exang": 0.0,
+    "oldpeak": 0.8,
+    "slope": 1.0,
+    "ca": 0.0,
+    "thal": 2.0
+  },
+  "metrics": {
+    "accuracy": 0.8197,
+    "precision": 0.84,
+    "recall": 0.75,
+    "f1": 0.7925,
+    "roc_auc": 0.9177,
+    "confusion_matrix": {
+      "tn": 29,
+      "fp": 4,
+      "fn": 7,
+      "tp": 21
+    }
+  },
+  "cv_roc_auc_mean": 0.9202,
+  "comparison": {
+    "Logistic Regression": {
+      "cv_roc_auc_mean": 0.9115,
+      "cv_roc_auc_std": 0.0427,
+      "test": {
+        "accuracy": 0.8689,
+        "precision": 0.8846,
+        "recall": 0.8214,
+        "f1": 0.8519,
+        "roc_auc": 0.9416,
+        "confusion_matrix": {
+          "tn": 30,
+          "fp": 3,
+          "fn": 5,
+          "tp": 23
+        }
+      }
+    },
+    "Decision Tree": {
+      "cv_roc_auc_mean": 0.8526,
+      "cv_roc_auc_std": 0.0731,
+      "test": {
+        "accuracy": 0.8033,
+        "precision": 0.8077,
+        "recall": 0.75,
+        "f1": 0.7778,
+        "roc_auc": 0.8777,
+        "confusion_matrix": {
+          "tn": 28,
+          "fp": 5,
+          "fn": 7,
+          "tp": 21
+        }
+      }
+    },
+    "Random Forest": {
+      "cv_roc_auc_mean": 0.9202,
+      "cv_roc_auc_std": 0.0364,
+      "test": {
+        "accuracy": 0.8197,
+        "precision": 0.84,
+        "recall": 0.75,
+        "f1": 0.7925,
+        "roc_auc": 0.9177,
+        "confusion_matrix": {
+          "tn": 29,
+          "fp": 4,
+          "fn": 7,
+          "tp": 21
+        }
+      }
+    },
+    "XGBoost": {
+      "cv_roc_auc_mean": 0.9037,
+      "cv_roc_auc_std": 0.0381,
+      "test": {
+        "accuracy": 0.8033,
+        "precision": 0.8333,
+        "recall": 0.7143,
+        "f1": 0.7692,
+        "roc_auc": 0.9253,
+        "confusion_matrix": {
+          "tn": 29,
+          "fp": 4,
+          "fn": 8,
+          "tp": 20
+        }
+      }
+    }
+  }
+}

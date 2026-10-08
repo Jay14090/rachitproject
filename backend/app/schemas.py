@@ -81,6 +81,25 @@ class DoctorOut(ORM):
     department: DepartmentOut
 
 
+class AvailabilityWindow(BaseModel):
+    weekday: int = Field(ge=0, le=6, description="0 = Monday ... 6 = Sunday")
+    start_time: dt.time
+    end_time: dt.time
+
+    @field_validator("end_time")
+    @classmethod
+    def end_after_start(cls, v, info):
+        start = info.data.get("start_time")
+        if start is not None and v <= start:
+            raise ValueError("end_time must be after start_time")
+        return v
+
+
+class ChangePasswordIn(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 # ---- patients
 class PatientIn(BaseModel):
     name: str = Field(min_length=2, max_length=120)
@@ -184,6 +203,33 @@ class DiabetesInput(BaseModel):
     bmi: float = Field(ge=10, le=70)
     diabetes_pedigree: float = Field(ge=0.0, le=3.0)
     age: int = Field(ge=1, le=120)
+
+
+class HeartInput(BaseModel):
+    """Cleveland-dataset features. Categorical codes follow the dataset's own encoding."""
+    patient_id: int
+    age: int = Field(ge=1, le=120)
+    sex: int = Field(ge=0, le=1, description="1 = male, 0 = female")
+    cp: int = Field(ge=0, le=3, description="Chest-pain type (dataset code 0-3)")
+    trestbps: float = Field(ge=70, le=250, description="Resting systolic BP (mm Hg)")
+    chol: float = Field(ge=80, le=700, description="Serum cholesterol (mg/dL)")
+    fbs: int = Field(ge=0, le=1, description="Fasting blood sugar > 120 mg/dL")
+    restecg: int = Field(ge=0, le=2, description="Resting ECG result (dataset code 0-2)")
+    thalach: float = Field(ge=50, le=250, description="Maximum heart rate achieved")
+    exang: int = Field(ge=0, le=1, description="Exercise-induced angina")
+    oldpeak: float = Field(ge=0, le=10, description="ST depression induced by exercise")
+    slope: int = Field(ge=0, le=2, description="Slope of peak-exercise ST segment (dataset code 0-2)")
+    ca: int = Field(ge=0, le=3, description="Major vessels coloured by fluoroscopy (0-3)")
+    thal: int = Field(ge=1, le=3, description="Thalassemia (dataset code 1-3)")
+
+
+class ModelUsageOut(BaseModel):
+    model_version: str
+    disease_type: str
+    prediction_count: int
+    avg_risk_score: float
+    last_used: datetime | None
+    risk_levels: dict[str, int]
 
 
 class Contribution(BaseModel):

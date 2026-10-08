@@ -66,8 +66,21 @@ export default function Appointments() {
 function AppointmentForm({ onDone }) {
   const { data: patients } = useFetch(() => api.get('/patients', { limit: 200 }))
   const { data: doctors } = useFetch(() => api.get('/doctors', { active_only: true }))
-  const { values, bind } = useForm({ patient_id: '', doctor_id: '', date: today(), time: '09:00', purpose: '' })
+  const { values, bind, setValues } = useForm({ patient_id: '', doctor_id: '', date: today(), time: '', purpose: '' })
   const [error, setError] = useState('')
+  const ready = values.doctor_id && values.date
+  const { data: slots, loading: slotsLoading } = useFetch(
+    () => (ready ? api.get(`/doctors/${values.doctor_id}/slots`, { date: values.date }) : Promise.resolve(null)),
+    [values.doctor_id, values.date],
+  )
+  const slotList = slots?.slots ?? []
+  // Doctors without a published schedule return no slots; fall back to manual entry only then.
+  const { data: sched } = useFetch(
+    () => (values.doctor_id ? api.get(`/doctors/${values.doctor_id}/availability`) : Promise.resolve(null)),
+    [values.doctor_id],
+  )
+  const restricted = !!sched && sched.length > 0
+
   const submit = async (e) => {
     e.preventDefault()
     setError('')
@@ -88,13 +101,26 @@ function AppointmentForm({ onDone }) {
         </select>
       </label>
       <label>Doctor
-        <select {...bind('doctor_id')} required>
+        <select name="doctor_id" value={values.doctor_id} required
+          onChange={(e) => setValues({ ...values, doctor_id: e.target.value, time: '' })}>
           <option value="">Select…</option>
           {doctors?.map((d) => <option key={d.doctor_id} value={d.doctor_id}>{d.name} — {d.department.department_name}</option>)}
         </select>
       </label>
-      <label>Date<input type="date" min={today()} {...bind('date')} required /></label>
-      <label>Time<input type="time" {...bind('time')} required /></label>
+      <label>Date
+        <input type="date" min={today()} name="date" value={values.date} required
+          onChange={(e) => setValues({ ...values, date: e.target.value, time: '' })} />
+      </label>
+      {restricted || slotList.length ? (
+        <label>Available time
+          <select {...bind('time')} required>
+            <option value="">{slotsLoading ? 'Loading…' : slotList.length ? 'Select a slot…' : 'No free slots that day'}</option>
+            {slotList.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </label>
+      ) : (
+        <label>Time<input type="time" {...bind('time')} required /></label>
+      )}
       <label className="wide">Purpose<input {...bind('purpose')} /></label>
       {error && <p className="error wide">{error}</p>}
       <button>Book appointment</button>

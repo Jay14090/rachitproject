@@ -2,7 +2,8 @@
   "disease": "diabetes",
   "version": "diabetes-logistic-regression-v1",
   "algorithm": "Logistic Regression",
-  "trained_at": "2026-10-08T04:45:09+00:00",
+  "sklearn_version": "1.9.1",
+  "trained_at": "2026-10-08T21:01:05+00:00",
   "dataset": "Pima Indians Diabetes (public, de-identified), n=768",
   "features": [
     "pregnancies",
@@ -87,6 +88,23 @@
           "fp": 28,
           "fn": 13,
           "tp": 41
+        }
+      }
+    },
+    "XGBoost": {
+      "cv_roc_auc_mean": 0.8264,
+      "cv_roc_auc_std": 0.0232,
+      "test": {
+        "accuracy": 0.7532,
+        "precision": 0.6538,
+        "recall": 0.6296,
+        "f1": 0.6415,
+        "roc_auc": 0.8283,
+        "confusion_matrix": {
+          "tn": 82,
+          "fp": 18,
+          "fn": 20,
+          "tp": 34
         }
       }
     }

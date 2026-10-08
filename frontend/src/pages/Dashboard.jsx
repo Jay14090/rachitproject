@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api'
 import { useFetch } from '../hooks'
 
@@ -35,7 +35,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </section>
         <section className="card">
-          <h3>Diabetes risk levels (all predictions)</h3>
+          <h3>Risk levels (all predictions)</h3>
           {noRisk ? <p className="muted">No predictions yet.</p> : (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
@@ -49,6 +49,46 @@ export default function Dashboard() {
           )}
         </section>
       </div>
+      <div className="grid2">
+        <section className="card">
+          <h3>Appointments by department</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={data.appointments_by_department} layout="vertical" margin={{ left: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" allowDecimals={false} />
+              <YAxis type="category" dataKey="department" width={130} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="count" name="Appointments" fill="#7a5cd6" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+        <section className="card">
+          <h3>Predictions — last 14 days</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={data.predictions_last_14_days.map((d) => ({ ...d, day: d.date.slice(5) }))}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" name="Predictions" stroke="#2f6fdb" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </section>
+      </div>
+      {Object.keys(data.predictions_by_disease).length > 0 && (
+        <section className="card">
+          <h3>Predictions by disease</h3>
+          <div className="stats">
+            {Object.entries(data.predictions_by_disease).map(([d, v]) => (
+              <div className="stat" key={d}>
+                <div className="num">{v.count}</div>
+                <div className="lbl">{d.replace('_', ' ')} · avg risk {(v.avg_risk * 100).toFixed(0)}%</div>
+                <div className="muted">low {v.levels.low} · moderate {v.levels.moderate} · high {v.levels.high}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="card">
         <h3>Appointments by status</h3>
         <div className="stats">
