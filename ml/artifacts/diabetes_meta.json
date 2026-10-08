@@ -1,0 +1,94 @@
+{
+  "disease": "diabetes",
+  "version": "diabetes-logistic-regression-v1",
+  "algorithm": "Logistic Regression",
+  "trained_at": "2026-10-08T04:45:09+00:00",
+  "dataset": "Pima Indians Diabetes (public, de-identified), n=768",
+  "features": [
+    "pregnancies",
+    "glucose",
+    "blood_pressure",
+    "skin_thickness",
+    "insulin",
+    "bmi",
+    "diabetes_pedigree",
+    "age"
+  ],
+  "feature_medians": {
+    "pregnancies": 3.0,
+    "glucose": 117.0,
+    "blood_pressure": 72.0,
+    "skin_thickness": 29.0,
+    "insulin": 125.0,
+    "bmi": 32.4,
+    "diabetes_pedigree": 0.3825,
+    "age": 29.0
+  },
+  "metrics": {
+    "accuracy": 0.7338,
+    "precision": 0.6032,
+    "recall": 0.7037,
+    "f1": 0.6496,
+    "roc_auc": 0.8126,
+    "confusion_matrix": {
+      "tn": 75,
+      "fp": 25,
+      "fn": 16,
+      "tp": 38
+    }
+  },
+  "cv_roc_auc_mean": 0.8444,
+  "comparison": {
+    "Logistic Regression": {
+      "cv_roc_auc_mean": 0.8444,
+      "cv_roc_auc_std": 0.0161,
+      "test": {
+        "accuracy": 0.7338,
+        "precision": 0.6032,
+        "recall": 0.7037,
+        "f1": 0.6496,
+        "roc_auc": 0.8126,
+        "confusion_matrix": {
+          "tn": 75,
+          "fp": 25,
+          "fn": 16,
+          "tp": 38
+        }
+      }
+    },
+    "Decision Tree": {
+      "cv_roc_auc_mean": 0.7827,
+      "cv_roc_auc_std": 0.0283,
+      "test": {
+        "accuracy": 0.7143,
+        "precision": 0.561,
+        "recall": 0.8519,
+        "f1": 0.6765,
+        "roc_auc": 0.7981,
+        "confusion_matrix": {
+          "tn": 64,
+          "fp": 36,
+          "fn": 8,
+          "tp": 46
+        }
+      }
+    },
+    "Random Forest": {
+      "cv_roc_auc_mean": 0.8371,
+      "cv_roc_auc_std": 0.0221,
+      "test": {
+        "accuracy": 0.7338,
+        "precision": 0.5942,
+        "recall": 0.7593,
+        "f1": 0.6667,
+        "roc_auc": 0.8189,
+        "confusion_matrix": {
+          "tn": 72,
+          "fp": 28,
+          "fn": 13,
+          "tp": 41
+        }
+      }
+    }
+  }
+}

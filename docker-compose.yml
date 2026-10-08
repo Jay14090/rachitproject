@@ -1,0 +1,15 @@
+# Optional: a MySQL server for the backend (the project defaults to SQLite if you skip this).
+#   docker compose up -d db
+#   export DATABASE_URL="mysql+pymysql://hospital:hospital@127.0.0.1:3306/smart_hospital"
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: smart_hospital
+      MYSQL_USER: hospital
+      MYSQL_PASSWORD: hospital
+      MYSQL_ROOT_PASSWORD: root
+    ports: ["3306:3306"]
+    volumes: [mysql_data:/var/lib/mysql]
+volumes:
+  mysql_data:
